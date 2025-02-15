@@ -21,7 +21,7 @@ def detect_shell():
         return "unknown"
 
 # Configure the LLM model
-def configure_llm(repo_id: str = "TheBloke/LLaMA-2-7B-chat-GGUF", filename: str = "llama-2-7b-chat.gguf.q6_K.bin"):
+def configure_llm(repo_id: str = "TheBloke/LLaMA-2-7B-chat-GGUF", filename: str = "llama-2-7b-chat.ggmlv3.q6_K.bin"):
     """
     Downloads and configures a specific quantized model from Hugging Face.
 
