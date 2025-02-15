@@ -6,6 +6,7 @@ from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 from llama_cpp import Llama
 from huggingface_hub import snapshot_download
+from huggingface_hub import hf_hub_download
 
 # Detect the shell environment
 def detect_shell():
@@ -22,18 +23,20 @@ def detect_shell():
         return "unknown"
 
 # Configure the LLM model
-def configure_llm(model_name: str = "TheBloke/LLaMA-2-7B-chat-GGML"):
+def configure_llm(repo_id: str = "TheBloke/LLaMA-2-7B-chat-GGML", filename: str = "llama-2-7b-chat.ggmlv3.q6_K.bin"):
     """
-    Downloads and configures a LLaMA-based model from Hugging Face.
-    
+    Downloads and configures a specific quantized model from Hugging Face.
+
     Args:
-        model_name (str): The name of the Hugging Face model.
-    
+        repo_id (str): The repository ID on Hugging Face.
+        filename (str): The specific model file to download.
+
     Returns:
-        Llama: Configured Llama instance.
+        str: The local file path to the downloaded model.
     """
-    model_dir = snapshot_download(model_name)
-    return Llama(model_path=os.path.join(model_dir, "model.ggmlv3.q4_0.bin"))
+    # Download the specified file from the repository
+    model_path = hf_hub_download(repo_id=repo_id, filename=filename)
+    return model_path
 
 # System prompt for the LLM
 def get_system_prompt(shell: str) -> str:
