@@ -1,4 +1,4 @@
-# Python Shell Interface with LLM Integration
+# Shell Interface with LLM Integration
 
 ## Overview
 
