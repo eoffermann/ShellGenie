@@ -1,161 +1,155 @@
-# Python Shell Interface with LLM Integration
+# ShellGenie: An Interactive Shell Interface with LLM Integration
 
 ## Overview
 
-This project provides a Python-based interactive command-line interface that emulates a traditional shell environment. It supports standard command execution, tab completion, and integrates with a Large Language Model (LLM) to interpret natural language commands. Users can execute typical shell commands or invoke the LLM for advanced assistance by prefixing commands with `!`.
+ShellGenie is a Python-based interactive command-line interface that emulates a traditional shell environment while integrating with a Large Language Model (LLM). It supports standard command execution, real-time tab completion, and natural language interpretation of commands. ShellGenie now offers two modes of operation:
+
+- **Local Mode:** Leverages quantized LLMs (via [llama-cpp-python](https://pypi.org/project/llama-cpp-python/)) to translate natural language instructions into safe, valid shell commands.
+- **External Mode:** Connects to OpenAI’s API to process natural language commands using models like `gpt-3.5-turbo`.
+
+Both modes include a confirmation prompt for executing LLM-suggested commands, and advanced configuration is handled automatically through a configuration file stored in your user’s config directory.
 
 ## Features
 
-- **Interactive Shell Interface**: Real-time command input with tab completion.
-- **Command Execution**: Run standard shell commands (`dir`, `cd`, etc.) and display their output.
-- **LLM Integration**: Interpret natural language commands prefixed with `!` and convert them into executable shell commands.
-- **Confirmation Prompt**: Prompt users for confirmation before executing commands suggested by the LLM.
-- **Cross-Platform Support**: Compatible with Windows, macOS, and Linux environments.
+- **Dual LLM Integration:** Choose between locally hosted quantized models or externally hosted OpenAI models.
+- **Interactive Shell Interface:** Enjoy real-time command input with tab completion and persistent command history.
+- **Natural Language Command Translation:** Issue commands in plain language prefixed with `!` to have the LLM suggest a safe shell command wrapped in `<cmd>...</cmd>` tags.
+- **Robust Configuration Management:** Automatically save and load your preferred settings, including mode, model repository, and retry attempts.
+- **Cross-Platform Support:** Works on Windows, macOS, and Linux.
+- **Enhanced Error Handling:** Improved retry mechanisms and error messages for smoother operation.
 
 ## Installation
 
 ### Prerequisites
 
-- **Python**: Version 3.8 or higher.
-- **C Compiler**: Required for building certain dependencies.
-  - **Windows**: [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-  - **macOS**: Xcode Command Line Tools
-  - **Linux**: GCC or Clang
+- **Python:** Version 3.8 or higher.
+- **C Compiler:** Required for building certain dependencies.
+  - **Windows:** [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+  - **macOS:** Xcode Command Line Tools (install with `xcode-select --install`)
+  - **Linux:** GCC or Clang
 
-### Dependencies
+### Conda Environment Setup
 
-- **`prompt_toolkit`**: For the interactive shell interface.
-- **`llama-cpp-python`**: Python bindings for the `llama.cpp` library, enabling LLM functionalities.
-- **`huggingface_hub`**: Interface to download models from Hugging Face.
+This project includes an `environment.yml` file to easily set up a dedicated Conda environment. To create and activate the environment, run:
 
-### Installation Steps
+```bash
+conda env create -f environment.yml
+conda activate ShellGenie
+```
 
-1. **Install `prompt_toolkit` and `huggingface_hub`:**
+*(Note: Replace `ShellGenie` with the actual environment name specified in your `environment.yml` if it differs.)*
 
-   ```bash
-   pip install prompt_toolkit huggingface_hub
-   ```
+### Additional Dependencies
 
-2. **Install `llama-cpp-python`:**
+If you prefer using `pip`, ensure the following packages are installed:
 
-   The installation of `llama-cpp-python` may require additional configuration based on your operating system and hardware. Below are the general steps:
+- **`prompt_toolkit`**: Provides the interactive shell interface.
+- **`llama-cpp-python`**: For local LLM functionalities.
+- **`huggingface_hub`**: To download quantized models from Hugging Face.
 
-   - **macOS with Metal (MPS) Support:**
+You can install them via:
 
-     Ensure you have Xcode installed:
+```bash
+pip install prompt_toolkit huggingface_hub llama-cpp-python
+```
 
-     ```bash
-     xcode-select --install
-     ```
+### LLM-Specific Setup
 
-     Then, install `llama-cpp-python` with Metal support:
+#### Local Mode (Quantized Models)
 
-     ```bash
-     CMAKE_ARGS="-DGGML_METAL=on" pip install llama-cpp-python
-     ```
+For local LLM usage, ShellGenie downloads the quantized model from Hugging Face. The default settings use:
 
-   - **Windows:**
+- **Repository ID:** `TheBloke/Llama-2-7B-Chat-GGUF`
+- **Model File:** `llama-2-7b-chat.Q6_K.gguf`
 
-     Install the necessary build tools:
+The model is automatically downloaded and cached when you run the shell.
 
-     1. Download and install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
-     2. During installation, select "Desktop development with C++".
+#### External Mode (OpenAI API)
 
-     Then, install `llama-cpp-python`:
+To use external mode, you must provide:
+- **OpenAI API Key**
+- **OpenAI Model Name** (e.g., `gpt-3.5-turbo`)
 
-     ```bash
-     pip install llama-cpp-python
-     ```
+Example command:
 
-   - **Linux:**
+```bash
+python console.py -e openai --openai-api-key YOUR_API_KEY --openai-model gpt-3.5-turbo
+```
 
-     Install the necessary build tools:
-
-     ```bash
-     sudo apt-get update
-     sudo apt-get install build-essential
-     ```
-
-     Then, install `llama-cpp-python`:
-
-     ```bash
-     pip install llama-cpp-python
-     ```
-
-   For detailed installation instructions and troubleshooting, refer to the [llama-cpp-python documentation](https://pypi.org/project/llama-cpp-python/).
-
-3. **Download a Quantized Model:**
-
-   To utilize the LLM functionalities, download a quantized model (e.g., 6-bit) from Hugging Face:
-
-   ```python
-   from huggingface_hub import hf_hub_download
-
-   model_path = hf_hub_download(
-       repo_id="TheBloke/LLaMA-2-7B-chat-GGML",
-       filename="model.q6_K.bin"
-   )
-   ```
-
-   This script downloads the specified model file and returns the local path where it's saved.
+*Note: The configuration is saved in a file under your home directory for subsequent runs.*
 
 ## Usage
 
-1. **Running the Shell Interface:**
+### Running ShellGenie
 
-   Save the provided Python script (e.g., `shell_interface.py`) and execute it:
+1. **Local Mode (default):**
+
+   Run the following command to start ShellGenie using a locally hosted model:
 
    ```bash
-   python shell_interface.py
+   python console.py
    ```
 
-2. **Command Examples:**
+2. **External Mode (OpenAI API):**
 
-   - **Standard Command Execution:**
+   Start the shell in external mode by providing the required API key and model:
 
-     ```
-     > dir
-     ```
-
-     Executes the `dir` command and displays the output.
-
-   - **Invoking the LLM:**
-
-     ```
-     > !list files in the current directory
-     ```
-
-     The LLM interprets the natural language command and suggests an equivalent shell command:
-
-     ```
-     LLM suggested command: dir
-     Do you want to execute this command? (yes/no): yes
-     ```
-
-     Upon confirmation, the suggested command is executed.
-
-3. **Exiting the Interface:**
-
-   To exit, type:
-
+   ```bash
+   python console.py -e openai --openai-api-key YOUR_API_KEY --openai-model gpt-3.5-turbo
    ```
-   > exit
+
+3. **Query Current Configuration:**
+
+   To display the current configuration without starting the shell:
+
+   ```bash
+   python console.py -q
    ```
+
+### Command Examples
+
+- **Standard Command Execution:**
+
+  ```
+  > dir
+  ```
+
+  Executes the `dir` command and displays the output.
+
+- **Invoking the LLM:**
+
+  ```
+  > !list files in the current directory
+  ```
+
+  The LLM will generate a corresponding shell command (e.g., `dir`) wrapped in `<cmd>...</cmd>` tags. You can review and edit the command before execution.
+
+- **Exiting the Interface:**
+
+  Simply type:
+
+  ```
+  > exit
+  ```
 
 ## Project Structure
 
 ```
 .
-├── shell_interface.py  # Main Python script for the shell interface
-└── command_history.txt # Command history file (automatically generated)
+├── console.py           # Entry point script for launching ShellGenie
+├── ShellGenie/          # Module containing core functionality and submodules
+│   ├── __init__.py      # Core module and configuration management
+│   └── openai_api.py    # OpenAI API integration for external mode
+├── environment.yml      # Conda environment file for dependency management
+└── LICENSE              # MIT License
 ```
 
 ## Future Enhancements
 
-- **Enhanced LLM Integration**: Connect to live LLM services for more dynamic command generation.
-- **Advanced Shell Features**: Support for piping (`|`), redirection (`>`), and custom aliases.
-- **Dynamic Tab Completion**: Offer command suggestions based on the current shell environment and user-defined commands.
-- **Extended Shell Support**: Emulate environments like `bash`, `PowerShell`, or `cmd` more closely.
+- **Broader LLM Support:** Integration with additional hosted LLM services beyond OpenAI.
+- **Advanced Shell Features:** Enhanced support for piping (`|`), redirection (`>`), and custom command aliases.
+- **Dynamic Tab Completion:** More context-aware command suggestions based on your shell environment.
+- **Improved Logging and Error Handling:** Deeper integration of logging frameworks and more robust error management.
 
 ## Contributing
 
@@ -168,11 +162,3 @@ Contributions are welcome! To contribute:
 ## License
 
 This project is licensed under the **MIT License**. See the `LICENSE` file for more details.
-
-## Contact
-
-For questions or suggestions, feel free to reach out:
-
-- **Author**: [Your Name]
-- **Email**: your.email@example.com
-- **GitHub**: [Your GitHub Profile](https://github.com/yourusername)
